@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DE7SHOP Order System</title>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f4f4f4;
+  margin:0;
+  padding:20px;
+}
+h1{text-align:center;}
+.card{
+  background:#fff;
+  padding:15px;
+  margin-bottom:15px;
+  border-radius:8px;
+  box-shadow:0 2px 5px rgba(0,0,0,.1);
+}
+label{display:block;margin-top:10px;}
+select,input{
+  width:100%;
+  padding:8px;
+  margin-top:5px;
+}
+button{
+  margin-top:15px;
+  padding:10px;
+  width:100%;
+  border:none;
+  background:#25D366;
+  color:#fff;
+  font-size:16px;
+  border-radius:5px;
+  cursor:pointer;
+}
+button:hover{opacity:.9}
+#cartList li{margin-bottom:5px}
+</style>
+</head>
+
+<body>
+
+<h1>DE7SHOP ORDER FORM</h1>
+
+<main>
+
+<!-- PRODUK AUTO DARI data.js -->
+<div id="productList"></div>
+
+<!-- CART -->
+<section class="card">
+  <h3>Cart</h3>
+  <ul id="cartList"></ul>
+  <p><b>Total: RM<span id="totalHarga">0</span></b></p>
+</section>
+
+<!-- MAKLUMAT PELANGGAN -->
+<section class="card">
+  <h3>Maklumat Pelanggan</h3>
+
+  <label>Nama</label>
+  <input type="text" id="nama">
+
+  <label>No Telefon</label>
+  <input type="text" id="telefon">
+
+  <label>Alamat / Nota</label>
+  <input type="text" id="alamat">
+
+  <button onclick="hantarWhatsApp()">Hantar WhatsApp</button>
+</section>
+
+</main>
+
+<!-- LOAD DATA -->
+<script src="data.js"></script>
+
+<script>
+/* ===== CART LOGIC ===== */
+let cart = [];
+let total = 0;
+
+function addToCart(nama, harga, warnaId, saizId, qtyId){
+  const warna = document.getElementById(warnaId).value;
+  const saiz = document.getElementById(saizId).value;
+  const qty = parseInt(document.getElementById(qtyId).value);
+
+  const subtotal = harga * qty;
+  total += subtotal;
+
+  cart.push(`${nama} | ${warna} | ${saiz} x${qty} = RM${subtotal}`);
+  renderCart();
+}
+
+function renderCart(){
+  const list = document.getElementById("cartList");
+  list.innerHTML = "";
+  cart.forEach(item=>{
+    const li = document.createElement("li");
+    li.textContent = item;
+    list.appendChild(li);
+  });
+  document.getElementById("totalHarga").textContent = total;
+}
+
+function hantarWhatsApp(){
+  const nama = document.getElementById("nama").value;
+  const telefon = document.getElementById("telefon").value;
+  const alamat = document.getElementById("alamat").value;
+
+  let msg = `*ORDER DE7SHOP*\n\nNama: ${nama}\nTel: ${telefon}\nAlamat: ${alamat}\n\n`;
+  cart.forEach(i => msg += `- ${i}\n`);
+  msg += `\n*Total: RM${total}*`;
+
+  const url = `https://wa.me/60123456789?text=${encodeURIComponent(msg)}`;
+  window.open(url, "_blank");
+}
+
+/* ===== RENDER PRODUK DARI data.js ===== */
+document.addEventListener("DOMContentLoaded", () => {
+
+  if(typeof PRODUK === "undefined"){
+    alert("❌ data.js gagal load");
+    return;
+  }
+
+  const productList = document.getElementById("productList");
+
+  Object.entries(PRODUK).forEach(([kod, p]) => {
+
+    const section = document.createElement("section");
+    section.className = "card";
+
+    section.innerHTML = `
+      <h3>${p.nama}</h3>
+      <p><b>RM${p.harga}</b></p>
+
+      <label>Warna</label>
+      <select id="w-${kod}">
+        ${p.warna.map(w=>`<option>${w}</option>`).join("")}
+      </select>
+
+      <label>Saiz</label>
+      <select id="s-${kod}">
+        ${p.saiz.map(s=>`<option>${s}</option>`).join("")}
+      </select>
+
+      <label>Kuantiti</label>
+      <select id="q-${kod}">
+        <option>1</option>
+        <option>2</option>
+        <option>3</option>
+      </select>
+
+      <button onclick="addProduk('${kod}')">Tambah Cart</button>
+    `;
+
+    productList.appendChild(section);
+  });
+});
+
+function addProduk(kod){
+  const p = PRODUK[kod];
+  addToCart(
+    p.nama,
+    p.harga,
+    `w-${kod}`,
+    `s-${kod}`,
+    `q-${kod}`
+  );
+}
+</script>
+
+</body>
+</html>
+
